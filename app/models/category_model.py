@@ -1,8 +1,9 @@
 from dataclasses import dataclass
 
 from app.configs.database import db
+from app.exceptions import AttributeTypeError
 from sqlalchemy import Column, Integer, String, Text
-from sqlalchemy.orm import relationship, validates
+from sqlalchemy.orm import backref, relationship, validates
 
 
 @dataclass
@@ -18,23 +19,17 @@ class Category(db.Model):
     name = Column(String(100), nullable=False, unique=True)
     description = Column(Text)
 
-    tasks = relationship("Task", secondary="tasks_categories", backref="categories")
+    tasks = relationship(
+        "Task",
+        secondary="tasks_categories", 
+        backref=backref("categories", uselist=True)
+    )
 
 
-    @validates("name")
-    def validate_name(self, key, value):
+    @validates("name", "description")
+    def validate_values(self, key, value):
        
         if value.__class__ != str:
-            raise TypeError(key)
-
-        return value.title()
-       
-        
-    @validates("description")
-    def validate_description(self, key, value):
-
-        if value.__class__ != str:
-            raise TypeError(key)
+            raise AttributeTypeError(key)
 
         return value.capitalize()
-
